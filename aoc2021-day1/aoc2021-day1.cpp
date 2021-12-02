@@ -14,24 +14,28 @@ int main()
     
     int count = 0;
 
+    // TIL there's no such thing as array.length in this crazy language. criminy
     for (int i = 1; i < sizeof(depths) / sizeof(depths[0]); i++) {
         
+        // genius engineering
         if (depths[i] > depths[i - 1]) {
             count++;
         }
 
     }
-
+    
     std::cout << "There were a total of " << count << " increases in depth during the first scan.\r\n";
 
     // part 2!
     
+    // look i'm using the same int to reduce allocations
     count = 0;
 
     // hmm
     // is there a more elegant way to handle the start of the array than this? prayhaps.
     int lastSumOfThree = depths[0] + depths[1] + depths[2];
     
+    // straightforward stuff. starting at index 1 because there's nothing to compare the 0th value to. we also end 2 indices early because we are tracking a 3-wide window and we do not want to break out of the array
     for (int i = 1; i < sizeof(depths) / sizeof(depths[0]) - 2; i++) {
         
         int newSumOfThree = depths[i] + depths[i+1] + depths[i+2];
