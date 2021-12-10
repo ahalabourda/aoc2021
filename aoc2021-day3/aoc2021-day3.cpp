@@ -12,11 +12,12 @@
 using namespace std;
 
 // for the real input
-//const int LINE_LENGTH = 12;
+const int LINE_LENGTH = 12;
 // for test input
-const int LINE_LENGTH = 5;
+//const int LINE_LENGTH = 5;
 
 bitset<LINE_LENGTH> FindOxygenGeneratorRatingFromValues(istream& inputFile);
+bitset<LINE_LENGTH> FindCarbonDioxideScrubberRatingFromValues(istream& inputFile);
 
 int main()
 {
@@ -27,10 +28,9 @@ int main()
     // saw a post about Boost::dynamic_bitset but using a dynamic data type seems to be defeating the purpose
     // just gonna sadly hardcode this. oh well. gg
      
-     //inputFile.open("real-input1.txt");
-    inputFile.open("test-input1.txt");
+    inputFile.open("real-input1.txt");
+    //inputFile.open("test-input1.txt");
     
-
     if (!inputFile) {
         cerr << "Unable to open input file";
         exit(1);
@@ -47,6 +47,7 @@ int main()
     int values[LINE_LENGTH] = {};
 
     while (getline(inputFile, singleLine)) {
+
         
         for (int i = 0; i < LINE_LENGTH; i++) {
             
@@ -72,14 +73,18 @@ int main()
 
     // can i not do this without requiring the second flip..?
     // seems pretty weird for .flip() to do something in-place AND return a value. hoping there's a neater way to do this even if this seems like it's still pretty fast
-    epsilonBits = gammaBits.flip();
-    gammaBits.flip();
+    //epsilonBits = gammaBits.flip();
+    //gammaBits.flip();
+
+    // haha i figured it out. woot
+    epsilonBits = ~gammaBits;
 
     cout << "Gamma bits: " << gammaBits << "\r\n";
 
     cout << "Final gamma int: " << (int)gammaBits.to_ulong() << " - " << "Final gamma int: " << (int)epsilonBits.to_ulong() << " which when multiplied together gives " << (int)gammaBits.to_ulong() * (int) epsilonBits.to_ulong() << "\r\n------\r\n";
 
-    FindOxygenGeneratorRatingFromValues(inputFile);
+    cout << "Behold our answer: " << (int)FindOxygenGeneratorRatingFromValues(inputFile).to_ulong() << " for the first thing and " << (int)FindCarbonDioxideScrubberRatingFromValues(inputFile).to_ulong() << " for the second thing! If we multiply these together we get: " << (int)FindOxygenGeneratorRatingFromValues(inputFile).to_ulong() * (int)FindCarbonDioxideScrubberRatingFromValues(inputFile).to_ulong() << "\r\n";
+    //cout << "Behold our answer: " << FindOxygenGeneratorRatingFromValues(inputFile) << " for the first thing and " << " nothing " << " for the second thing!\r\n";
 
 }
 
@@ -89,8 +94,6 @@ bitset<LINE_LENGTH> FindOxygenGeneratorRatingFromValues(istream &input) {
     // reset our position to the start of the file
     input.clear();
     input.seekg(0);
-
-    bitset<LINE_LENGTH> finalResult;
 
     string singleLine;
 
@@ -104,15 +107,15 @@ bitset<LINE_LENGTH> FindOxygenGeneratorRatingFromValues(istream &input) {
         
     }
     
-    bool desiredValue;    
+    bool desiredValue;
     
-    for (int i = 0; i < LINE_LENGTH; i++) {
+    // loop over each column of the inputs
+    for (int i = LINE_LENGTH - 1; i >= 0; i--) {
 
         int tracker = 0;
 
-        for (int j = 0; j < lines.size() / lines[0].size(); j++) {
-
-            cout << "doing J " << j << "\r\n";
+        // check the whole column to find its most popular option
+        for (int j = 0; j < lines.size(); j++) {
 
             if (lines[j][i] == 1) {
                 tracker++;
@@ -130,30 +133,88 @@ bitset<LINE_LENGTH> FindOxygenGeneratorRatingFromValues(istream &input) {
             desiredValue = 0;
         }
         
-        // this linesDeleted business is definitely terrible and i think i should learn to use iterators to prevent it in the future
-        int linesDeleted = 0;
+        vector<bitset<LINE_LENGTH>>::iterator it = lines.begin();
 
-        for (int k = 0; k < (lines.size() / lines[0].size()) - linesDeleted; k++) {
+        while (it != lines.end()) {
 
-            if (lines[k - linesDeleted][0] != desiredValue) {
-                cout << "removeing line " << k - linesDeleted << "\r\n";
-                lines.erase(lines.begin() + k - linesDeleted);
-                linesDeleted++;
+            if ((*it)[i] != desiredValue) {
+
+                it = lines.erase(it);
+                
+            }
+            else {
+                ++it;
             }
 
         }
 
     }
 
-    cout << "there's no way this works right? vector size is: " << lines.size() / lines[0].size() << " and our 0th value is " << lines[0] << "\r\n";
-
-    return finalResult;
+    return lines[0];
 
 }
 
 bitset<LINE_LENGTH> FindCarbonDioxideScrubberRatingFromValues(istream &input) {
     
-    bitset<LINE_LENGTH> finalResult;
-    return finalResult;
+    // reset our position to the start of the file
+    input.clear();
+    input.seekg(0);
+
+    string singleLine;
+
+    int values[LINE_LENGTH] = {};
+
+    vector<bitset<LINE_LENGTH>> lines;
+
+    while (getline(input, singleLine)) {
+
+        lines.push_back(bitset<LINE_LENGTH>(singleLine));
+
+    }
+
+    bool desiredValue;
+
+    // loop over each column of the inputs
+    for (int i = LINE_LENGTH - 1; i >= 0; i--) {
+
+        int tracker = 0;
+
+        // check the whole column to find its most popular option
+        for (int j = 0; j < lines.size(); j++) {
+
+            if (lines[j][i] == 1) {
+                tracker++;
+            }
+            else {
+                tracker--;
+            }
+
+        }
+
+        if (tracker >= 0) {
+            desiredValue = 0;
+        }
+        else {
+            desiredValue = 1;
+        }
+
+        vector<bitset<LINE_LENGTH>>::iterator it = lines.begin();
+
+        while (it != lines.end() && lines.size() != 1) {
+
+            if ((*it)[i] != desiredValue) {
+
+                it = lines.erase(it);
+
+            }
+            else {
+                ++it;
+            }
+
+        }
+
+    }
+
+    return lines[0];
 
 }
